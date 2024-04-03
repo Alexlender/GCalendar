@@ -48,3 +48,40 @@ app.get('/api/events', (req, res) => {
 app.listen(port, host, () => {
   console.log(`Listening on http://${host}:${port}`);
 });
+
+
+// Схема бд
+
+// users
+// [{
+//     id: "",
+//     name: "",
+//     login: "",
+//     phone: "",
+//     password: ""
+// }, ...]
+
+// groups
+// [{
+//     id: ""
+//     owner: ""
+//     events: ["event", ..]
+//     plans: ["asd", ..]
+// }, ...]
+
+// events
+// [{
+//     id: ""
+//     owner: ""
+//     group_id: ""
+//     description: ""
+//     poll: [{id: "", status: ""}, ...]
+//     date: ""
+// }, ...]
+
+// plans
+// [{
+//     owner: "",
+//     date: "",
+//     description: ""
+// }, ...]
