@@ -28,12 +28,6 @@ const urlencodedParser = express.urlencoded({ extended: false });
 app.use(cookieParser('vlad1'));
 app.use(bodyParser.json())
 
-app.use(express.static(process.cwd() + '/public'))
-
-app.use(express.static(process.cwd() + '/public', {
-  extensions: ['html']
-}));
-
 
 app.get('/op', (req, res) => {
 
@@ -45,8 +39,27 @@ app.get('/op', (req, res) => {
     if(err) return res.sendStatus(403)
     res.send(user.phone)
   })
-  
 
+})
+
+app.get('/', (req, res) => {
+
+  let token = req.cookies.AB;
+
+  jwt.verify(token, "vlad1", (err, user) => {
+    if(err) return res.redirect("index")
+    res.redirect("main")
+  })
+})
+
+app.get('/index', (req, res) => {
+
+  let token = req.cookies.AB;
+
+  jwt.verify(token, "vlad1", (err, user) => {
+    if(err) return res.redirect("index")
+    res.redirect("main")
+  })
 })
 
 app.get('/api/events', (req, res) => {
@@ -113,6 +126,12 @@ app.post('/login', urlencodedParser, (req, res) => {
 
 })
 
+
+app.use(express.static(process.cwd() + '/public'))
+
+app.use(express.static(process.cwd() + '/public', {
+  extensions: ['html']
+}));
 
 
 app.listen(port, host, () => {
