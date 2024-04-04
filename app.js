@@ -51,36 +51,40 @@ app.listen(port, host, () => {
 
 
 // Схема бд
-
 // users
 // [{
 //     id: "",
 //     name: "",
 //     login: "",
 //     phone: "",
-//     password: ""
+//     password: "",
+//     icon: "",
+//     tg_id: "",
+//     groups: ["group_id", ...]
+
 // }, ...]
 
 // groups
 // [{
-//     id: ""
-//     owner: ""
-//     events: ["event", ..]
-//     plans: ["asd", ..]
+//     id: "",
+//     name: "",
+//     owner: "",
+//     members: ["user_id", ...]
 // }, ...]
 
 // events
 // [{
-//     id: ""
-//     owner: ""
-//     group_id: ""
-//     description: ""
-//     poll: [{id: "", status: ""}, ...]
+//     id: "",
+//     owner: "",
+//     group_id: "",
+//     description: "",
+//     poll: [{id: "", status: ""}, ...],
 //     date: ""
 // }, ...]
 
 // plans
 // [{
+//     id: "",
 //     owner: "",
 //     date: "",
 //     description: ""
