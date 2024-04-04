@@ -89,7 +89,8 @@ app.post('/login', urlencodedParser, (req, res) => {
           if (!valid) { return res.sendStatus(401) }
           let payload = { phone: phone || 0 };
           var token = jwt.sign(payload, "vlad1")
-          res.status(200).send({ token })
+          res.setHeader('Set-Cookie', `AB=${token}; HttpOnly`);
+          res.status(200).redirect('/')
         })
       })
   }
