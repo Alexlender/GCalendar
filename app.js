@@ -55,7 +55,6 @@ app.listen(port, host, () => {
 // [{
 //     id: "",
 //     name: "",
-//     login: "",
 //     phone: "",
 //     password: "",
 //     icon: "",
