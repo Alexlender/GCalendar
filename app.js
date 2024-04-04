@@ -6,6 +6,7 @@ import util from 'util'
 import MongoJs from 'mongojs'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import cookieParser from 'cookie-parser'
 
 import options from "./options.json" assert {type: "json"}
 import { Hash } from 'crypto'
@@ -24,6 +25,7 @@ const Users = MongoJs(connection_url, ['Users']).Users;
 
 const urlencodedParser = express.urlencoded({ extended: false });
 
+app.use(cookieParser('vlad1'));
 app.use(bodyParser.json())
 
 app.use(express.static(process.cwd() + '/public'))
@@ -32,6 +34,20 @@ app.use(express.static(process.cwd() + '/public', {
   extensions: ['html']
 }));
 
+
+app.get('/op', (req, res) => {
+
+  let token = req.cookies.AB;
+
+  console.log(token)
+
+  jwt.verify(token, "vlad1", (err, user) => {
+    if(err) return res.sendStatus(403)
+    res.send(user.phone)
+  })
+  
+
+})
 
 app.get('/api/events', (req, res) => {
 
@@ -89,7 +105,7 @@ app.post('/login', urlencodedParser, (req, res) => {
           if (!valid) { return res.sendStatus(401) }
           let payload = { phone: phone || 0 };
           var token = jwt.sign(payload, "vlad1")
-          res.setHeader('Set-Cookie', `AB=${token}; HttpOnly`);
+          res.cookie('AB', token)
           res.status(200).redirect('/')
         })
       })
