@@ -91,19 +91,6 @@ app.get('/main', (req, res) => {
   res.redirect('/')
 })
 
-app.get('/api/events', (req, res) => {
-
-  const arg = req.query.search;
-
-  //const search = arg ? { text: { $regex: arg, $options: "i" } } : {};
-  const search = {};
-  // console.log(search)
-  Users.find(search, function (err, docs) {
-    res.send(docs);
-  })
-
-})
-
 app.post('/api/add_group', authenticateApi, (req, res) => {
 
   const user = req.mongo_user
@@ -135,7 +122,7 @@ app.post('/api/add_group', authenticateApi, (req, res) => {
     })
   }
   else {
-    res.sendStatus(400)
+    res.status(400).send("Указал всё неправильно, глупый")
   }
 
 })
@@ -151,7 +138,7 @@ app.post('/api/add_event', authenticateApi, (req, res) => {
 
     Groups.findOne({ _id: ObjectId(group_id) }, function (err, item) {
       if (!item) {
-        res.sendStatus(400)
+        res.status(400).send("Группа не найдена")
       }
       else {
         
@@ -168,18 +155,82 @@ app.post('/api/add_event', authenticateApi, (req, res) => {
           })
         }
         else{
-          res.sendStatus(403)
+          res.status(403).send("Тебе сюда нельзя")
         }
       }
     }
     )
-
   }
   else{
     res.sendStatus(401)
   }
 
 })
+
+app.post('/api/get_events', authenticateApi, (req, res) => {
+
+  const user = req.mongo_user
+  const group_id = req.body.group_id
+
+  if (user && group_id) {
+
+    Groups.findOne({ _id: ObjectId(group_id) }, function (err, item) {
+      if (!item) {
+        res.status(400).send("Группа не найдена")
+      }
+      else {
+        if(item.members.find(it => JSON.stringify(it) == JSON.stringify(user._id))){
+          Events.find({group_id: group_id}, function(err, events){
+            res.send(events)
+          })
+        }
+        else{
+          res.status(403).send("Тебе сюда нельзя")
+        }
+      }
+    }
+    )
+  }
+  else{
+    res.sendStatus(401)
+  }
+})
+
+
+app.post('/api/add_user', authenticateApi, (req, res) => {
+
+  const user = req.mongo_user
+  const group_id = req.body.group_id
+  const phone = req.body.phone
+
+  if (user && group_id && phone) {
+
+    Groups.findOne({ _id: ObjectId(group_id) }, function (err, group) {
+      if (!group) {
+
+        res.status(400).send({"answer" : "Группа не найдена"})
+      }
+      else {
+        Users.findOne({phone : phone}, function(err, friend){
+          if(!friend){
+            res.status(400).send({"answer" : "Пользователь не найден"})
+          }
+          else{
+            Groups.updateOne({_id: group._id}, { $addToSet: { members: ObjectId(friend._id) } }, function(err, grup){
+              res.send(grup)
+            })
+          }
+        })
+      }
+    }
+    )
+  }
+  else{
+    res.status(401).send({"answer" : "Не взламывай базу, пожалуйста"})
+  }
+})
+
+
 
 app.post('/register', urlencodedParser, (req, res) => {
 
