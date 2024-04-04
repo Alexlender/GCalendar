@@ -10,12 +10,19 @@
 </head>
 
 <body>
-    <form action="/register" method="post">
-        <input type="text" name="name" required placeholder="ФИО">
-        <input type="tel" maxlength="11" name="phone" required placeholder="8(123)-456-78-90">
-        <input type="password" name="passwd" required placeholder="Пароль">
-        <input type="submit" value="Зарегистрироваться">
-    </form>
+    <header>
+        <div class="header">
+			<h1 class="logo-text">GitlerCal</h1>
+        </div>
+    </header>
+    <div class="form">
+        <form action="/register" method="post">
+            <input type="text" name="name" required placeholder="ФИО">
+            <input type="tel" maxlength="11" name="phone" required placeholder="8(123)-456-78-90">
+            <input type="password" name="passwd" required placeholder="Пароль">
+            <input type="submit" value="Зарегистрироваться">
+        </form>
+    </div>
 </body>
 
 </html>
