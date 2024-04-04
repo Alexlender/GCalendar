@@ -34,7 +34,7 @@ app.use(bodyParser.json())
 const authenticateToken = (req, res, next) => {
 
   jwt.verify(req.cookies.AB, "vlad1", (err, jwt) => {
-    if (err) return res.sendStatus(403)
+    if (err) next();
     Users.findOne({ phone: jwt.phone }, function (err, user) {
       if (err) return res.sendStatus(403)
       req.user = user
@@ -47,31 +47,31 @@ const authenticateToken = (req, res, next) => {
 app.get('/op', authenticateToken, (req, res) => {
 
   const file = fs.readFileSync('public/main.html', 'utf-8');
-  const template = mustache.render(file, { "username": req.user.name});
+  const template = mustache.render(file, { "username": req.user.name });
   res.send(template);
 
 })
 
-app.get('/', (req, res) => {
+app.get('/', authenticateToken, (req, res) => {
 
-  let token = req.cookies.AB;
-
-  jwt.verify(token, "vlad1", (err, user) => {
-    if (err) return res.redirect("index")
+  let template;
+  if (req.user) {
     const file = fs.readFileSync('public/main.html', 'utf-8');
-    const template = mustache.render(file, { "username": "ИДИ НАХУЙ" });
-    res.send(template);
-  })
+    template = mustache.render(file, { "username": req.user.name });
+  }
+  else{
+    const file = fs.readFileSync('public/index.html', 'utf-8');
+    template = mustache.render(file, {});
+  }
+  res.send(template);
+
 })
 
 app.get('/index', (req, res) => {
-
-  let token = req.cookies.AB;
-
-  jwt.verify(token, "vlad1", (err, user) => {
-    if (err) return res.redirect("index")
-    res.redirect("main")
-  })
+  res.redirect('/')
+})
+app.get('/main', (req, res) => {
+  res.redirect('/')
 })
 
 app.get('/api/events', (req, res) => {
