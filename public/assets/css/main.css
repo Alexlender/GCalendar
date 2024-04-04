@@ -18,3 +18,16 @@
 body{
     background-image:url("https://funik.ru/wp-content/uploads/2018/10/17478da42271207e1d86.jpg") ;
 }
+
+.user-info{
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+
+.header{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    margin: 10px;
+}

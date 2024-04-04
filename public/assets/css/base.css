@@ -1,6 +1,6 @@
 header {
     /* background-color: #d7bbbf; */
-    background-image: url("https://smallivingworld.ru/800/600/https/sun9-41.userapi.com/c9716/u156925371/-14/x_995b8cdc.jpg");
+    background-color: #adceff;
     background-clip: none;
     border-bottom: 2px solid #333131;
     width: 100%;
@@ -8,6 +8,8 @@ header {
     position: relative;
     top: 0;
     left: 0;
+    
+
 
 }
 body{
