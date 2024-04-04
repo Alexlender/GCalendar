@@ -44,14 +44,15 @@ app.get('/api/events', (req, res) => {
 })
 
 
-app.post('/register', (req, res) => {
+app.post('/register', urlencodedParser, (req, res) => {
 
-  const _phone = req.body["phone"];
-  const _name = req.body["name"];
-  const _passwd = req.body["passwd"];
-
-  if (_name && _text && _phone) {
+  const _phone = req.body.phone;
+  const _name = req.body.name;
+  const _passwd = req.body.passwd;
+  console.log(_phone, _name, _passwd);
+  if (_name && _passwd && _phone) {
     Users.insert({ name: _name, passwd: _passwd, phone: _phone, icon: "/assets/img/default_icon.png" });
+    console.log("УУУРАААААААА")
   }
 
   res.redirect('/login');
