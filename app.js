@@ -23,6 +23,7 @@ const Groups = MongoJs(connection_url, ['Groups']).Groups;
 const Plans = MongoJs(connection_url, ['Plans']).Plans;
 const Users = MongoJs(connection_url, ['Users']).Users;
 
+const Reacts = ["Agree", "Danya", "Maybe"]
 
 const urlencodedParser = express.urlencoded({ extended: false });
 
@@ -37,7 +38,6 @@ const authenticateToken = (req, res, next) => {
     Users.findOne({ phone: jwt.phone }, function (err, user) {
       if (err) return res.sendStatus(403)
       req.user = user
-      console.log(user)
       next();
     })
   })
@@ -101,16 +101,10 @@ app.post('/api/add_group', authenticateApi, (req, res) => {
     Groups.findOne({ name: group_name, owner: user._id }, function (err, item) {
       console.log(item);
       if (!item) {
-        Groups.insert({
-          name: group_name,
-          owner: user._id,
-          members: [user._id]
-        }, function (err, item) {
-          res.send({
-            id: item._id,
-            name: item.name
-          }
-          )
+        Groups.insert({ name: group_name, owner: user._id, members: [user._id] }, function (err, item) {
+          Users.updateOne({ _id: ObjectId(user._id) }, { $addToSet: { groups: item._id } }, function (err, resuls) {
+            res.send({ id: item._id, name: item.name })
+          })
         })
       }
       else {
@@ -122,7 +116,40 @@ app.post('/api/add_group', authenticateApi, (req, res) => {
     })
   }
   else {
-    res.status(400).send("Указал всё неправильно, глупый")
+    res.status(400).send({ answer: "Указал всё неправильно, глупый" })
+  }
+
+})
+
+app.post('/api/delete_group', authenticateApi, (req, res) => {
+
+  const user = req.mongo_user
+  const group_id = req.body.group_id
+
+  if (user && group_id) {
+
+    Groups.findOne({ _id: ObjectId(group_id) }, function (err, item) {
+      if (!item) {
+        res.status(400).send({
+          answer: "Нет такой группы"
+        })
+      }
+      else {
+        if (JSON.stringify(item.owner) == JSON.stringify(user._id)) {
+          Users.updateMany({ groups: ObjectId(group_id) }, { $pull: { 'groups': ObjectId(group_id) } }, function () {
+            Groups.remove({ _id: ObjectId(group_id) }, function (err, result) {
+              res.send(result)
+            })
+          })
+        }
+        else {
+          res.status(403).send({ answer: "Нет, ты не админ этой группы" })
+        }
+      }
+    })
+  }
+  else {
+    res.status(400).send({ answer: "Указал всё неправильно, глупый" })
   }
 
 })
@@ -138,14 +165,14 @@ app.post('/api/add_event', authenticateApi, (req, res) => {
 
     Groups.findOne({ _id: ObjectId(group_id) }, function (err, item) {
       if (!item) {
-        res.status(400).send("Группа не найдена")
+        res.status(400).send({answer: "Группа не найдена"})
       }
       else {
-        
-        if(item.members.find(it => JSON.stringify(it) == JSON.stringify(user._id))){
+
+        if (item.members.find(it => JSON.stringify(it) == JSON.stringify(user._id))) {
           Events.findOne({ owner: user._id, description: description, date: date, group_id: group_id }, function (err, event) {
             if (!event) {
-              Events.insert({ owner: user._id, description: description, date: date, group_id: group_id }, function (err, in_event) {
+              Events.insert({ owner: user._id, description: description, date: date, group_id: group_id, poll: [{ user_id: user._id, status: "Agree" }] }, function (err, in_event) {
                 res.send(in_event)
               })
             }
@@ -154,14 +181,14 @@ app.post('/api/add_event', authenticateApi, (req, res) => {
             }
           })
         }
-        else{
-          res.status(403).send("Тебе сюда нельзя")
+        else {
+          res.status(403).send({answer: "Тебе сюда нельзя"})
         }
       }
     }
     )
   }
-  else{
+  else {
     res.sendStatus(401)
   }
 
@@ -176,26 +203,107 @@ app.post('/api/get_events', authenticateApi, (req, res) => {
 
     Groups.findOne({ _id: ObjectId(group_id) }, function (err, item) {
       if (!item) {
-        res.status(400).send("Группа не найдена")
+        res.status(400).send({answer: "Группа не найдена"})
       }
       else {
-        if(item.members.find(it => JSON.stringify(it) == JSON.stringify(user._id))){
-          Events.find({group_id: group_id}, function(err, events){
+        if (item.members.find(it => JSON.stringify(it) == JSON.stringify(user._id))) {
+          Events.find({ group_id: group_id }, function (err, events) {
             res.send(events)
           })
         }
-        else{
-          res.status(403).send("Тебе сюда нельзя")
+        else {
+          res.status(403).send({answer: "Тебе сюда нельзя"})
         }
       }
     }
     )
   }
-  else{
+  else {
     res.sendStatus(401)
   }
 })
 
+app.post('/api/add_plan', authenticateApi, (req, res) => {
+
+  const user = req.mongo_user
+  const description = req.body.description
+  const group_id = req.body.group_id
+  const date = req.body.date
+
+  if (user && description && group_id) {
+
+    Groups.findOne({ _id: ObjectId(group_id) }, function (err, item) {
+      if (!item) {
+        res.status(400).send({answer: "Группа не найдена"})
+      }
+      else {
+
+        if (item.members.find(it => JSON.stringify(it) == JSON.stringify(user._id))) {
+          Plans.findOne({ owner: user._id, description: description, date: date, group_id: group_id }, function (err, event) {
+            if (!event) {
+              Plans.insert({ owner: user._id, description: description, date: date, group_id: group_id }, function (err, in_event) {
+                res.send(in_event)
+              })
+            }
+            else {
+              res.send(event)
+            }
+          })
+        }
+        else {
+          res.status(403).send({answer: "Тебе сюда нельзя"})
+        }
+      }
+    }
+    )
+  }
+  else {
+    res.sendStatus(401)
+  }
+})
+
+app.post('/api/get_plans', authenticateApi, (req, res) => {
+
+  const user = req.mongo_user
+  const group_id = req.body.group_id
+  const req_user = req.body.user_id
+
+
+  if (user && group_id) {
+
+    Groups.findOne({ _id: ObjectId(group_id) }, function (err, item) {
+      if (!item) {
+        res.status(400).send({answer: "Группа не найдена"})
+      }
+      else {
+        if (item.members.find(it => JSON.stringify(it) == JSON.stringify(user._id))) {
+          if (req_user) {
+            if (item.members.find(it => JSON.stringify(it) == JSON.stringify(req_user))) {
+              Plans.find({ owner: ObjectId(req_user), group_id: group_id }, function (err, plans) {
+                res.send(plans)
+              })
+            }
+            else {
+              res.status(400).send({answer: "Пользователь косячный"})
+            }
+          }
+          else {
+            Plans.find({ group_id: group_id }, function (err, plans) {
+              res.send(plans)
+            })
+          }
+        }
+        else {
+          res.status(403).send({answer: "Тебе сюда нельзя"})
+        }
+      }
+    }
+    )
+  }
+  else {
+    res.sendStatus(401)
+  }
+})
 
 app.post('/api/add_user', authenticateApi, (req, res) => {
 
@@ -208,16 +316,18 @@ app.post('/api/add_user', authenticateApi, (req, res) => {
     Groups.findOne({ _id: ObjectId(group_id) }, function (err, group) {
       if (!group) {
 
-        res.status(400).send({"answer" : "Группа не найдена"})
+        res.status(400).send({ "answer": "Группа не найдена" })
       }
       else {
-        Users.findOne({phone : phone}, function(err, friend){
-          if(!friend){
-            res.status(400).send({"answer" : "Пользователь не найден"})
+        Users.findOne({ phone: phone }, function (err, friend) {
+          if (!friend) {
+            res.status(400).send({ "answer": "Пользователь не найден" })
           }
-          else{
-            Groups.updateOne({_id: group._id}, { $addToSet: { members: ObjectId(friend._id) } }, function(err, grup){
-              res.send(grup)
+          else {
+            Groups.updateOne({ _id: group._id }, { $addToSet: { members: ObjectId(friend._id) } }, function () {
+              Users.updateOne({ _id: ObjectId(friend._id) }, { $addToSet: { groups: group._id } }, function (err, result) {
+                res.send(result)
+              })
             })
           }
         })
@@ -225,8 +335,95 @@ app.post('/api/add_user', authenticateApi, (req, res) => {
     }
     )
   }
-  else{
-    res.status(401).send({"answer" : "Не взламывай базу, пожалуйста"})
+  else {
+    res.status(401).send({ "answer": "Не взламывай базу, пожалуйста" })
+  }
+})
+
+app.post('/api/react_event', authenticateApi, (req, res) => {
+
+  const user = req.mongo_user
+  const event_id = req.body.event_id
+  const react = req.body.react
+
+  if (!Reacts.includes(react)) {
+    res.status(400).send({answer: 'Реакт может быть ["Agree", "Danya", "Maybe"]'})
+    return
+  }
+
+  if (user && react && event_id) {
+
+    Events.findOne({ _id: ObjectId(event_id) }, function (err, item) {
+      if (!item) {
+        res.status(400).send({answer: "Ивент не найден"})
+      }
+      else {
+        Groups.findOne({ "_id": ObjectId(item.group_id) }, function (err, group) {
+          if (!group) {
+            res.status(400).send({answer: "Группа этого ивента умерла"})
+          }
+          else {
+            if (group.members.find(it => JSON.stringify(it) == JSON.stringify(user._id))) {
+              Events.updateOne({ "_id": ObjectId(event_id) }, { $pull: { 'poll': { "user_id": ObjectId(user._id) } } }, function () {
+                Events.updateOne({ "_id": ObjectId(event_id) },
+                  { $addToSet: { poll: { user_id: user._id, status: react } } }, function () {
+                    Events.findOne({ "_id": ObjectId(event_id) }, function (err, result) {
+                      res.send(result)
+                    })
+                  })
+              })
+            }
+            else {
+              res.status(403).send({answer: "Тебе сюда нельзя"})
+            }
+          }
+        })
+      }
+    }
+    )
+  }
+  else {
+    res.status(400).send("Неправильно заполнил поля")
+  }
+
+})
+
+app.post('/api/get_groups', authenticateApi, (req, res) => {
+
+  const user = req.mongo_user
+
+  if (user) {
+    res.send({ groups: user.groups })
+  }
+  else {
+    res.status(403).send({answer: "Тебе сюда нельзя"})
+  }
+})
+
+app.post('/api/get_group_info', authenticateApi, (req, res) => {
+
+  const user = req.mongo_user
+  const group_id = req.body.group_id
+
+  if (user && group_id) {
+
+    Groups.findOne({ _id: ObjectId(group_id) }, function (err, item) {
+      if (!item) {
+        res.status(400).send({answer: "Группа не найдена"})
+      }
+      else {
+        if (item.members.find(it => JSON.stringify(it) == JSON.stringify(user._id))) {
+          res.send(item)
+        }
+        else {
+          res.status(403).send({answer: "Тебе сюда нельзя"})
+        }
+      }
+    }
+    )
+  }
+  else {
+    res.status(401).send({answer: "Тебе сюда нельзя"})
   }
 })
 
@@ -252,7 +449,6 @@ app.post('/register', urlencodedParser, (req, res) => {
   }
 
 })
-
 
 app.post('/login', urlencodedParser, (req, res) => {
 
@@ -330,6 +526,7 @@ app.listen(port, host, () => {
 // [{
 //     id: "",
 //     owner: "",
+//     group_id: "",
 //     date: "",
 //     description: ""
 // }, ...]
@@ -339,15 +536,19 @@ app.listen(port, host, () => {
 // add_user()
 // add_event()
 // get_events()
-
+// get_groups()
 // add_plan()
-// get_plans_by_user() //by user in group 
+// get_plans_by_user() //by user in group
 // get_all_plans()
-// react_event() //states ["agree", "danya", "maybe"]
 
+// react_event() //states ["agree", "danya", "maybe"]
 // delete_group()
+
+
 // delete_plan()
 // delete_event()
+
+
 
 //change_icon()
 
