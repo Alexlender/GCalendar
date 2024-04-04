@@ -3,14 +3,13 @@ import express from 'express'
 import bodyParser from 'body-parser'
 import fs from 'fs'
 import util from 'util'
-import MongoJs from 'mongojs'
+import MongoJs, { ObjectID, ObjectId } from 'mongojs'
 import mustache from 'mustache'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import cookieParser from 'cookie-parser'
 
 import options from "./options.json" assert {type: "json"}
-import { Hash } from 'crypto'
 
 const app = express()
 const router = express.Router();
@@ -44,13 +43,31 @@ const authenticateToken = (req, res, next) => {
   })
 }
 
-app.get('/op', authenticateToken, (req, res) => {
+const authenticateApi = (req, res, next) => {
 
-  const file = fs.readFileSync('public/main.html', 'utf-8');
-  const template = mustache.render(file, { "username": req.user.name });
-  res.send(template);
+  if (req.body.user.phone && req.body.user.passwd) {
+    Users.findOne({ phone: req.body.user.phone }, function (err, user) {
+      if (err) {
+        return res.sendStatus(500)
+      }
+      if (!user) { return res.sendStatus(401) }
+      bcrypt.compare(req.body.user.passwd, user.passwd, function (err, valid) {
+        if (err) {
+          return res.sendStatus(500)
+        }
+        if (!valid) { return res.sendStatus(401) }
 
-})
+        req.mongo_user = user
+        next();
+      })
+    })
+  }
+  else {
+    next();
+  }
+}
+
+
 
 app.get('/', authenticateToken, (req, res) => {
 
@@ -59,7 +76,7 @@ app.get('/', authenticateToken, (req, res) => {
     const file = fs.readFileSync('public/main.html', 'utf-8');
     template = mustache.render(file, { "username": req.user.name });
   }
-  else{
+  else {
     const file = fs.readFileSync('public/index.html', 'utf-8');
     template = mustache.render(file, {});
   }
@@ -87,6 +104,82 @@ app.get('/api/events', (req, res) => {
 
 })
 
+app.post('/api/add_group', authenticateApi, (req, res) => {
+
+  const user = req.mongo_user
+  const group_name = req.body.group_name
+
+  if (user && group_name) {
+
+    Groups.findOne({ name: group_name, owner: user._id }, function (err, item) {
+      console.log(item);
+      if (!item) {
+        Groups.insert({
+          name: group_name,
+          owner: user._id,
+          members: [user._id]
+        }, function (err, item) {
+          res.send({
+            id: item._id,
+            name: item.name
+          }
+          )
+        })
+      }
+      else {
+        res.send({
+          id: item._id,
+          name: item.name
+        })
+      }
+    })
+  }
+  else {
+    res.sendStatus(400)
+  }
+
+})
+
+app.post('/api/add_event', authenticateApi, (req, res) => {
+
+  const user = req.mongo_user
+  const description = req.body.description
+  const group_id = req.body.group_id
+  const date = req.body.date
+
+  if (user && description && group_id) {
+
+    Groups.findOne({ _id: ObjectId(group_id) }, function (err, item) {
+      if (!item) {
+        res.sendStatus(400)
+      }
+      else {
+        
+        if(item.members.find(it => JSON.stringify(it) == JSON.stringify(user._id))){
+          Events.findOne({ owner: user._id, description: description, date: date, group_id: group_id }, function (err, event) {
+            if (!event) {
+              Events.insert({ owner: user._id, description: description, date: date, group_id: group_id }, function (err, in_event) {
+                res.send(in_event)
+              })
+            }
+            else {
+              res.send(event)
+            }
+          })
+        }
+        else{
+          res.sendStatus(403)
+        }
+      }
+    }
+    )
+
+  }
+  else{
+    res.sendStatus(401)
+  }
+
+})
 
 app.post('/register', urlencodedParser, (req, res) => {
 
