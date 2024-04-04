@@ -5,7 +5,7 @@ import fs from 'fs'
 import util from 'util'
 import MongoJs from 'mongojs'
 import bcrypt from 'bcrypt'
-
+import jwt from 'jwt-simple'
 
 import options from "./options.json" assert {type: "json"}
 import { Hash } from 'crypto'
@@ -62,13 +62,38 @@ app.post('/register', urlencodedParser, (req, res) => {
       }
     })
   }
-  else{
+  else {
     res.sendStatus(400)
   }
-  
+
 })
 
 
+app.post('/login', urlencodedParser, (req, res) => {
+
+  if (!req.body.phone || !req.body.passwd) {
+
+    return res.sendStatus(400)
+  } else {
+    var phone = req.body.phone
+    var passwd = req.body.passwd
+    Users.findOne({ phone: phone }, function (err, user) {
+        if (err) {
+          return res.sendStatus(500)
+        }
+        if (!user) { return res.sendStatus(401) }
+        bcrypt.compare(passwd, user.passwd, function (err, valid) {
+          if (err) {
+            return res.sendStatus(500)
+          }
+          if (!valid) { return res.sendStatus(401) }
+          var token = jwt.encode({ phone: phone }, config.secretkey)
+          res.send(token)
+        })
+      })
+  }
+
+})
 
 
 
