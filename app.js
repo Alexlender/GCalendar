@@ -13,6 +13,7 @@ import options from "./options.json" assert {type: "json"}
 import { Hash } from 'crypto'
 
 const app = express()
+const router = express.Router();
 
 const host = "0.0.0.0"
 const port = 3000
@@ -30,16 +31,24 @@ app.use(cookieParser('vlad1'));
 app.use(bodyParser.json())
 
 
-app.get('/op', (req, res) => {
+const authenticateToken = (req, res, next) => {
 
-  let token = req.cookies.AB;
-
-  console.log(token)
-
-  jwt.verify(token, "vlad1", (err, user) => {
-    if(err) return res.sendStatus(403)
-    res.send(user.phone)
+  jwt.verify(req.cookies.AB, "vlad1", (err, jwt) => {
+    if (err) return res.sendStatus(403)
+    Users.findOne({ phone: jwt.phone }, function (err, user) {
+      if (err) return res.sendStatus(403)
+      req.user = user
+      console.log(user)
+      next();
+    })
   })
+}
+
+app.get('/op', authenticateToken, (req, res) => {
+
+  const file = fs.readFileSync('public/main.html', 'utf-8');
+  const template = mustache.render(file, { "username": req.user.name});
+  res.send(template);
 
 })
 
@@ -48,9 +57,9 @@ app.get('/', (req, res) => {
   let token = req.cookies.AB;
 
   jwt.verify(token, "vlad1", (err, user) => {
-    if(err) return res.redirect("index")
+    if (err) return res.redirect("index")
     const file = fs.readFileSync('public/main.html', 'utf-8');
-    const template = mustache.render(file, {"username":"ИДИ НАХУЙ"});
+    const template = mustache.render(file, { "username": "ИДИ НАХУЙ" });
     res.send(template);
   })
 })
@@ -60,7 +69,7 @@ app.get('/index', (req, res) => {
   let token = req.cookies.AB;
 
   jwt.verify(token, "vlad1", (err, user) => {
-    if(err) return res.redirect("index")
+    if (err) return res.redirect("index")
     res.redirect("main")
   })
 })
@@ -110,21 +119,21 @@ app.post('/login', urlencodedParser, (req, res) => {
     var phone = req.body.phone
     var passwd = req.body.passwd
     Users.findOne({ phone: phone }, function (err, user) {
+      if (err) {
+        return res.sendStatus(500)
+      }
+      if (!user) { return res.sendStatus(401) }
+      bcrypt.compare(passwd, user.passwd, function (err, valid) {
         if (err) {
           return res.sendStatus(500)
         }
-        if (!user) { return res.sendStatus(401) }
-        bcrypt.compare(passwd, user.passwd, function (err, valid) {
-          if (err) {
-            return res.sendStatus(500)
-          }
-          if (!valid) { return res.sendStatus(401) }
-          let payload = { phone: phone || 0 };
-          var token = jwt.sign(payload, "vlad1")
-          res.cookie('AB', token)
-          res.status(200).redirect('/')
-        })
+        if (!valid) { return res.sendStatus(401) }
+        let payload = { phone: phone || 0 };
+        var token = jwt.sign(payload, "vlad1")
+        res.cookie('AB', token)
+        res.status(200).redirect('/')
       })
+    })
   }
 
 })
