@@ -4,6 +4,7 @@ import bodyParser from 'body-parser'
 import fs from 'fs'
 import util from 'util'
 import MongoJs from 'mongojs'
+import mustache from 'mustache'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import cookieParser from 'cookie-parser'
@@ -48,7 +49,9 @@ app.get('/', (req, res) => {
 
   jwt.verify(token, "vlad1", (err, user) => {
     if(err) return res.redirect("index")
-    res.redirect("main")
+    const file = fs.readFileSync('public/main.html', 'utf-8');
+    const template = mustache.render(file, {"username":"ИДИ НАХУЙ"});
+    res.send(template);
   })
 })
 
