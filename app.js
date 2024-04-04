@@ -44,6 +44,21 @@ app.get('/api/events', (req, res) => {
 })
 
 
+app.post('/register', (req, res) => {
+
+  const _phone = req.body["phone"];
+  const _name = req.body["name"];
+  const _passwd = req.body["passwd"];
+
+  if (_name && _text && _phone) {
+    Users.insert({ name: _name, passwd: _passwd, phone: _phone, icon: "/assets/img/default_icon.png" });
+  }
+
+  res.redirect('/login');
+
+})
+
+
 
 app.listen(port, host, () => {
   console.log(`Listening on http://${host}:${port}`);
