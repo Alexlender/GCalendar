@@ -4,8 +4,11 @@ import bodyParser from 'body-parser'
 import fs from 'fs'
 import util from 'util'
 import MongoJs from 'mongojs'
+import bcrypt from 'bcrypt'
+
 
 import options from "./options.json" assert {type: "json"}
+import { Hash } from 'crypto'
 
 const app = express()
 
@@ -51,13 +54,21 @@ app.post('/register', urlencodedParser, (req, res) => {
   const _passwd = req.body.passwd;
 
   if (_name && _passwd && _phone) {
-    Users.insert({ name: _name, passwd: _passwd, phone: _phone, icon: "/assets/img/default_icon.png" });
-
+    bcrypt.hash(_passwd, 10, function (err, hash) {
+      if (err) { res.sendStatus(500) }
+      else {
+        Users.insert({ name: _name, passwd: hash, phone: _phone, icon: "/assets/img/default_icon.png" });
+        res.redirect('/login');
+      }
+    })
   }
-
-  res.redirect('/login');
-
+  else{
+    res.sendStatus(400)
+  }
+  
 })
+
+
 
 
 
