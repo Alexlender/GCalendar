@@ -3,9 +3,9 @@
     grid-template-rows: auto;
     width: 20%;
     margin: auto;
+    margin-top: 3%;
 }
 input{
-
     margin: 5px;
     font-size: 20px;
 }
