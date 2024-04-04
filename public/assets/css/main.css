@@ -1,21 +1,20 @@
-header {
-    /* background-color: #d7bbbf; */
-    background-image: url("https://smallivingworld.ru/800/600/https/sun9-41.userapi.com/c9716/u156925371/-14/x_995b8cdc.jpg");
-    background-clip: none;
-    border-bottom: 2px solid #333131;
-    width: 100%;
-    height: 50px;
-    position: relative;
-    top: 0;
+#slide-menu{
+    position: absolute;
+    background-color: aqua;
+    width: 200px;
+    height: 100%;
+    left: -180px;
+    transition: left 0.4s ease;
+    transition-delay: 0.3s;
+    opacity: 50%;
+    z-index: 3;
+    border-radius: 0px 10px 10px 0px;
+}
+#slide-menu:hover {
     left: 0;
-
+    transition: left 0.4s ease;
+    transition-delay: 0s;
 }
 body{
-    margin: 0 !important;
-}
-.logo-text{
-    font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-    margin: auto;
-    font-size: 30px;
-    text-align: center;
+    background-image:url("https://funik.ru/wp-content/uploads/2018/10/17478da42271207e1d86.jpg") ;
 }
