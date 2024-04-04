@@ -87,7 +87,7 @@ app.post('/login', urlencodedParser, (req, res) => {
             return res.sendStatus(500)
           }
           if (!valid) { return res.sendStatus(401) }
-          var token = jwt.encode({ phone: phone }, config.secretkey)
+          var token = jwt.encode({ phone: phone }, "1")
           res.send(token)
         })
       })
