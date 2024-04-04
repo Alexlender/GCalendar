@@ -5,7 +5,7 @@ import fs from 'fs'
 import util from 'util'
 import MongoJs from 'mongojs'
 import bcrypt from 'bcrypt'
-import jwt from 'jwt-simple'
+import jwt from 'jsonwebtoken'
 
 import options from "./options.json" assert {type: "json"}
 import { Hash } from 'crypto'
@@ -87,8 +87,9 @@ app.post('/login', urlencodedParser, (req, res) => {
             return res.sendStatus(500)
           }
           if (!valid) { return res.sendStatus(401) }
-          var token = jwt.encode({ phone: phone }, config.secretkey)
-          res.send(token)
+          let payload = { phone: phone || 0 };
+          var token = jwt.sign(payload, "vlad1")
+          res.status(200).send({ token })
         })
       })
   }
