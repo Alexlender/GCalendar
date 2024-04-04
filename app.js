@@ -74,7 +74,7 @@ app.get('/', authenticateToken, (req, res) => {
   let template;
   if (req.user) {
     const file = fs.readFileSync('public/main.html', 'utf-8');
-    template = mustache.render(file, { "username": req.user.name });
+    template = mustache.render(file, { "username": req.user.name, "icon": req.user.icon });
   }
   else {
     const file = fs.readFileSync('public/index.html', 'utf-8');
@@ -333,3 +333,23 @@ app.listen(port, host, () => {
 //     date: "",
 //     description: ""
 // }, ...]
+
+
+// add_group()
+// add_user()
+// add_event()
+// get_events()
+
+// add_plan()
+// get_plans_by_user() //by user in group 
+// get_all_plans()
+// react_event() //states ["agree", "danya", "maybe"]
+
+// delete_group()
+// delete_plan()
+// delete_event()
+
+//change_icon()
+
+
+
