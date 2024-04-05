@@ -25,6 +25,8 @@ const Users = MongoJs(connection_url, ['Users']).Users;
 
 const Reacts = ["Agree", "Danya", "Maybe"]
 
+var requests = {}
+
 const urlencodedParser = express.urlencoded({ extended: false });
 
 app.use(cookieParser('vlad1'));
@@ -46,6 +48,7 @@ const authenticateToken = (req, res, next) => {
 const authenticateApi = (req, res, next) => {
 
   if (req.body.user.phone && req.body.user.passwd) {
+
     Users.findOne({ phone: req.body.user.phone }, function (err, user) {
       if (err) {
         return res.sendStatus(500)
@@ -57,7 +60,11 @@ const authenticateApi = (req, res, next) => {
         }
         if (!valid) { return res.sendStatus(401) }
 
+        if (Date.now() - requests[user.phone] < 2000) {
+          return res.sendStatus(500)
+        }
         req.mongo_user = user
+        requests[user.phone] = Date.now()
         next();
       })
     })
@@ -165,7 +172,7 @@ app.post('/api/add_event', authenticateApi, (req, res) => {
 
     Groups.findOne({ _id: ObjectId(group_id) }, function (err, item) {
       if (!item) {
-        res.status(400).send({answer: "Группа не найдена"})
+        res.status(400).send({ answer: "Группа не найдена" })
       }
       else {
 
@@ -182,7 +189,7 @@ app.post('/api/add_event', authenticateApi, (req, res) => {
           })
         }
         else {
-          res.status(403).send({answer: "Тебе сюда нельзя"})
+          res.status(403).send({ answer: "Тебе сюда нельзя" })
         }
       }
     }
@@ -203,7 +210,7 @@ app.post('/api/get_events', authenticateApi, (req, res) => {
 
     Groups.findOne({ _id: ObjectId(group_id) }, function (err, item) {
       if (!item) {
-        res.status(400).send({answer: "Группа не найдена"})
+        res.status(400).send({ answer: "Группа не найдена" })
       }
       else {
         if (item.members.find(it => JSON.stringify(it) == JSON.stringify(user._id))) {
@@ -212,7 +219,7 @@ app.post('/api/get_events', authenticateApi, (req, res) => {
           })
         }
         else {
-          res.status(403).send({answer: "Тебе сюда нельзя"})
+          res.status(403).send({ answer: "Тебе сюда нельзя" })
         }
       }
     }
@@ -234,7 +241,7 @@ app.post('/api/add_plan', authenticateApi, (req, res) => {
 
     Groups.findOne({ _id: ObjectId(group_id) }, function (err, item) {
       if (!item) {
-        res.status(400).send({answer: "Группа не найдена"})
+        res.status(400).send({ answer: "Группа не найдена" })
       }
       else {
 
@@ -251,7 +258,7 @@ app.post('/api/add_plan', authenticateApi, (req, res) => {
           })
         }
         else {
-          res.status(403).send({answer: "Тебе сюда нельзя"})
+          res.status(403).send({ answer: "Тебе сюда нельзя" })
         }
       }
     }
@@ -273,7 +280,7 @@ app.post('/api/get_plans', authenticateApi, (req, res) => {
 
     Groups.findOne({ _id: ObjectId(group_id) }, function (err, item) {
       if (!item) {
-        res.status(400).send({answer: "Группа не найдена"})
+        res.status(400).send({ answer: "Группа не найдена" })
       }
       else {
         if (item.members.find(it => JSON.stringify(it) == JSON.stringify(user._id))) {
@@ -284,7 +291,7 @@ app.post('/api/get_plans', authenticateApi, (req, res) => {
               })
             }
             else {
-              res.status(400).send({answer: "Пользователь косячный"})
+              res.status(400).send({ answer: "Пользователь косячный" })
             }
           }
           else {
@@ -294,7 +301,7 @@ app.post('/api/get_plans', authenticateApi, (req, res) => {
           }
         }
         else {
-          res.status(403).send({answer: "Тебе сюда нельзя"})
+          res.status(403).send({ answer: "Тебе сюда нельзя" })
         }
       }
     }
@@ -347,7 +354,7 @@ app.post('/api/react_event', authenticateApi, (req, res) => {
   const react = req.body.react
 
   if (!Reacts.includes(react)) {
-    res.status(400).send({answer: 'Реакт может быть ["Agree", "Danya", "Maybe"]'})
+    res.status(400).send({ answer: 'Реакт может быть ["Agree", "Danya", "Maybe"]' })
     return
   }
 
@@ -355,12 +362,12 @@ app.post('/api/react_event', authenticateApi, (req, res) => {
 
     Events.findOne({ _id: ObjectId(event_id) }, function (err, item) {
       if (!item) {
-        res.status(400).send({answer: "Ивент не найден"})
+        res.status(400).send({ answer: "Ивент не найден" })
       }
       else {
         Groups.findOne({ "_id": ObjectId(item.group_id) }, function (err, group) {
           if (!group) {
-            res.status(400).send({answer: "Группа этого ивента умерла"})
+            res.status(400).send({ answer: "Группа этого ивента умерла" })
           }
           else {
             if (group.members.find(it => JSON.stringify(it) == JSON.stringify(user._id))) {
@@ -374,7 +381,7 @@ app.post('/api/react_event', authenticateApi, (req, res) => {
               })
             }
             else {
-              res.status(403).send({answer: "Тебе сюда нельзя"})
+              res.status(403).send({ answer: "Тебе сюда нельзя" })
             }
           }
         })
@@ -396,7 +403,7 @@ app.post('/api/get_groups', authenticateApi, (req, res) => {
     res.send({ groups: user.groups })
   }
   else {
-    res.status(403).send({answer: "Тебе сюда нельзя"})
+    res.status(403).send({ answer: "Тебе сюда нельзя" })
   }
 })
 
@@ -409,21 +416,21 @@ app.post('/api/get_group_info', authenticateApi, (req, res) => {
 
     Groups.findOne({ _id: ObjectId(group_id) }, function (err, item) {
       if (!item) {
-        res.status(400).send({answer: "Группа не найдена"})
+        res.status(400).send({ answer: "Группа не найдена" })
       }
       else {
         if (item.members.find(it => JSON.stringify(it) == JSON.stringify(user._id))) {
           res.send(item)
         }
         else {
-          res.status(403).send({answer: "Тебе сюда нельзя"})
+          res.status(403).send({ answer: "Тебе сюда нельзя" })
         }
       }
     }
     )
   }
   else {
-    res.status(401).send({answer: "Тебе сюда нельзя"})
+    res.status(401).send({ answer: "Тебе сюда нельзя" })
   }
 })
 
@@ -437,15 +444,18 @@ app.post('/register', urlencodedParser, (req, res) => {
 
   if (_name && _passwd && _phone) {
     bcrypt.hash(_passwd, 10, function (err, hash) {
-      if (err) { res.sendStatus(500) }
-      else {
+      if (err) { return res.sendStatus(500) }
+
+      Users.find({ phone: _phone }, function (err, item) {
+        if (item) { return res.status(400).send("Пользователь с таким номером уже есть") }
         Users.insert({ name: _name, passwd: hash, phone: _phone, icon: "/assets/img/default_icon.png" });
         res.redirect('/login');
-      }
+      })
+
     })
   }
   else {
-    res.sendStatus(400)
+    return res.sendStatus(400)
   }
 
 })
