@@ -399,12 +399,10 @@ app.post('/api/get_groups', authenticateApi, (req, res) => {
 
   const user = req.mongo_user
 
-  if (user) {
-    res.send({ groups: user.groups })
-  }
-  else {
-    res.status(403).send({ answer: "Тебе сюда нельзя" })
-  }
+  if (!user) { return res.status(403).send({ answer: "Тебе сюда нельзя" }) }
+
+  res.send({ groups: user.groups })
+
 })
 
 app.post('/api/get_group_info', authenticateApi, (req, res) => {
@@ -412,26 +410,19 @@ app.post('/api/get_group_info', authenticateApi, (req, res) => {
   const user = req.mongo_user
   const group_id = req.body.group_id
 
-  if (user && group_id) {
+  if (!user || !group_id) { return res.status(401).send({ answer: "Тебе сюда нельзя" }) }
 
-    Groups.findOne({ _id: ObjectId(group_id) }, function (err, item) {
-      if (!item) {
-        res.status(400).send({ answer: "Группа не найдена" })
-      }
-      else {
-        if (item.members.find(it => JSON.stringify(it) == JSON.stringify(user._id))) {
-          res.send(item)
-        }
-        else {
-          res.status(403).send({ answer: "Тебе сюда нельзя" })
-        }
-      }
+  Groups.findOne({ _id: ObjectId(group_id) }, function (err, item) {
+    if (!item) { return res.status(400).send({ answer: "Группа не найдена" }) }
+
+    if (item.members.find(it => JSON.stringify(it) != JSON.stringify(user._id))) {
+      return res.status(403).send({ answer: "Тебе сюда нельзя" })
     }
-    )
+
+    res.send(item)
   }
-  else {
-    res.status(401).send({ answer: "Тебе сюда нельзя" })
-  }
+  )
+
 })
 
 
@@ -442,49 +433,46 @@ app.post('/register', urlencodedParser, (req, res) => {
   const _name = req.body.name;
   const _passwd = req.body.passwd;
 
-  if (_name && _passwd && _phone) {
-    bcrypt.hash(_passwd, 10, function (err, hash) {
-      if (err) { return res.sendStatus(500) }
+  if (!_name || !_passwd || !_phone) { return res.sendStatus(400) }
 
-      Users.find({ phone: _phone }, function (err, item) {
-        if (item) { return res.status(400).send("Пользователь с таким номером уже есть") }
-        Users.insert({ name: _name, passwd: hash, phone: _phone, icon: "/assets/img/default_icon.png" });
-        res.redirect('/login');
-      })
+  bcrypt.hash(_passwd, 10, function (err, hash) {
+    if (err) { return res.sendStatus(500) }
 
+    Users.find({ phone: _phone }, function (err, item) {
+      if (item) { return res.status(400).send("Пользователь с таким номером уже есть") }
+
+      Users.insert({ name: _name, passwd: hash, phone: _phone, icon: "/assets/img/default_icon.png" });
+      res.redirect('/login');
     })
-  }
-  else {
-    return res.sendStatus(400)
-  }
+
+  })
 
 })
 
 app.post('/login', urlencodedParser, (req, res) => {
 
-  if (!req.body.phone || !req.body.passwd) {
+  const phone = req.body.phone
+  const passwd = req.body.passwd
 
-    return res.sendStatus(400)
-  } else {
-    var phone = req.body.phone
-    var passwd = req.body.passwd
-    Users.findOne({ phone: phone }, function (err, user) {
+  if (!req.body.phone || !phone) { return res.sendStatus(400) }
+
+  Users.findOne({ phone: phone }, function (err, user) {
+    if (err) {
+      return res.sendStatus(500)
+    }
+    if (!user) { return res.sendStatus(401) }
+    bcrypt.compare(passwd, user.passwd, function (err, valid) {
       if (err) {
         return res.sendStatus(500)
       }
-      if (!user) { return res.sendStatus(401) }
-      bcrypt.compare(passwd, user.passwd, function (err, valid) {
-        if (err) {
-          return res.sendStatus(500)
-        }
-        if (!valid) { return res.sendStatus(401) }
-        let payload = { phone: phone || 0 };
-        var token = jwt.sign(payload, "vlad1")
-        res.cookie('AB', token)
-        res.status(200).redirect('/')
-      })
+      if (!valid) { return res.sendStatus(401) }
+      let payload = { phone: phone || 0 };
+      var token = jwt.sign(payload, "vlad1")
+      res.cookie('AB', token)
+      res.status(200).redirect('/')
     })
-  }
+  })
+
 
 })
 
