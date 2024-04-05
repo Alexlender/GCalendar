@@ -328,15 +328,15 @@ app.post('/api/add_user', authenticateApi, (req, res) => {
       else {
         Users.findOne({ phone: phone }, function (err, friend) {
           if (!friend) {
-            res.status(400).send({ "answer": "Пользователь не найден" })
+            return res.status(400).send({ "answer": "Пользователь не найден" })
           }
-          else {
-            Groups.updateOne({ _id: group._id }, { $addToSet: { members: ObjectId(friend._id) } }, function () {
-              Users.updateOne({ _id: ObjectId(friend._id) }, { $addToSet: { groups: group._id } }, function (err, result) {
-                res.send(result)
-              })
+
+          Groups.updateOne({ _id: group._id }, { $addToSet: { members: ObjectId(friend._id) } }, function () {
+            Users.updateOne({ _id: ObjectId(friend._id) }, { $addToSet: { groups: group._id } }, function (err, result) {
+              res.send(result)
             })
-          }
+          })
+
         })
       }
     }
@@ -354,45 +354,32 @@ app.post('/api/react_event', authenticateApi, (req, res) => {
   const react = req.body.react
 
   if (!Reacts.includes(react)) {
-    res.status(400).send({ answer: 'Реакт может быть ["Agree", "Danya", "Maybe"]' })
-    return
+    return res.status(400).send({ answer: 'Реакт может быть ["Agree", "Danya", "Maybe"]' })
   }
 
-  if (user && react && event_id) {
+  if (!user || !react || !event_id) { return res.status(400).send("Неправильно заполнил поля") }
 
-    Events.findOne({ _id: ObjectId(event_id) }, function (err, item) {
-      if (!item) {
-        res.status(400).send({ answer: "Ивент не найден" })
+  Events.findOne({ _id: ObjectId(event_id) }, function (err, item) {
+    if (!item) { return res.status(400).send({ answer: "Ивент не найден" }) }
+
+    Groups.findOne({ "_id": ObjectId(item.group_id) }, function (err, group) {
+      if (!group) { return res.status(400).send({ answer: "Группа этого ивента умерла" }) }
+
+      if (group.members.find(it => JSON.stringify(it) != JSON.stringify(user._id))) {
+        return res.status(403).send({ answer: "Тебе сюда нельзя" })
       }
-      else {
-        Groups.findOne({ "_id": ObjectId(item.group_id) }, function (err, group) {
-          if (!group) {
-            res.status(400).send({ answer: "Группа этого ивента умерла" })
-          }
-          else {
-            if (group.members.find(it => JSON.stringify(it) == JSON.stringify(user._id))) {
-              Events.updateOne({ "_id": ObjectId(event_id) }, { $pull: { 'poll': { "user_id": ObjectId(user._id) } } }, function () {
-                Events.updateOne({ "_id": ObjectId(event_id) },
-                  { $addToSet: { poll: { user_id: user._id, status: react } } }, function () {
-                    Events.findOne({ "_id": ObjectId(event_id) }, function (err, result) {
-                      res.send(result)
-                    })
-                  })
-              })
-            }
-            else {
-              res.status(403).send({ answer: "Тебе сюда нельзя" })
-            }
-          }
-        })
-      }
-    }
-    )
-  }
-  else {
-    res.status(400).send("Неправильно заполнил поля")
-  }
 
+      Events.updateOne({ "_id": ObjectId(event_id) }, { $pull: { 'poll': { "user_id": ObjectId(user._id) } } }, function () {
+        Events.updateOne({ "_id": ObjectId(event_id) },
+          { $addToSet: { poll: { user_id: user._id, status: react } } }, function () {
+            Events.findOne({ "_id": ObjectId(event_id) }, function (err, result) {
+              res.send(result)
+            })
+          })
+      })
+    })
+  }
+  )
 })
 
 app.post('/api/get_groups', authenticateApi, (req, res) => {
@@ -457,14 +444,10 @@ app.post('/login', urlencodedParser, (req, res) => {
   if (!req.body.phone || !phone) { return res.sendStatus(400) }
 
   Users.findOne({ phone: phone }, function (err, user) {
-    if (err) {
-      return res.sendStatus(500)
-    }
+    if (err) { return res.sendStatus(500) }
     if (!user) { return res.sendStatus(401) }
     bcrypt.compare(passwd, user.passwd, function (err, valid) {
-      if (err) {
-        return res.sendStatus(500)
-      }
+      if (err) { return res.sendStatus(500) }
       if (!valid) { return res.sendStatus(401) }
       let payload = { phone: phone || 0 };
       var token = jwt.sign(payload, "vlad1")
