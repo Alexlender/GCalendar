@@ -10,20 +10,79 @@
 </head>
 
 <body>
-	<header>
-		<div class="header">
-			<h1 class="logo-text">Календарь</h1>
-			<p>Привет, {{username}}</p>
-			<img src="{{icon}}">
-		</div>
-	</header>
+	<div id="mn-btn">
 
+	</div>
 	<div id="slide-menu">
-		
+		<div class="user-info-box">
+			<img src="{{icon}}">
+			<div class="name-opt-logout">
+				<a style="margin: auto;">{{username}}</a>
+				<a class="ref-btn" href="#">Настройки</a>
+				<a class="ref-btn" href="#">Выйти</a>
+			</div>
+		</div>
+
+
+		<div class="useful-btn-box">
+			<div class="useful-btn" onclick="">Мои мероприятия</div>
+			<div class="useful-btn" onclick="">Мои группы</div>
+			<div class="useful-btn" onclick="">ээээ хз</div>
+			<div class="useful-btn" onclick="">ээээ хз</div>
+			<div class="useful-btn" onclick="">ээээ хз</div>
+		</div>
+
 	</div>
 
-	<div>
-		<input type="datetime-local" >
+	<!-- пока просто сделал чтобы 8 дней встали нормально, потом шаблоном отправим целиком html код -->
+	<div id="main-div">
+		<div class="day">
+			<div class="date">{{date}}</div>
+			<div class="week-day">{{weekday}}</div>
+			<div class="day-content">тут будет что-то</div>
+		</div>
+
+		<div class="day">
+			<div class="date">{{date}}</div>
+			<div class="week-day">{{weekday}}</div>
+			<div class="day-content">тут будет что-то</div>
+		</div>
+
+		<div class="day">
+			<div class="date">{{date}}</div>
+			<div class="week-day">{{weekday}}</div>
+			<div class="day-content">тут будет что-то</div>
+		</div>
+
+		<div class="day">
+			<div class="date">{{date}}</div>
+			<div class="week-day">{{weekday}}</div>
+			<div class="day-content">тут будет что-то</div>
+		</div>
+
+		<div class="day">
+			<div class="date">{{date}}</div>
+			<div class="week-day">{{weekday}}</div>
+			<div class="day-content">тут будет что-то</div>
+		</div>
+
+		<div class="day">
+			<div class="date">{{date}}</div>
+			<div class="week-day">{{weekday}}</div>
+			<div class="day-content">тут будет что-то</div>
+		</div>
+
+		<div class="day">
+			<div class="date">{{date}}</div>
+			<div class="week-day">{{weekday}}</div>
+			<div class="day-content">тут будет что-то</div>
+		</div>
+
+		<div class="day">
+			<div class="date">{{date}}</div>
+			<div class="week-day">{{weekday}}</div>
+			<div class="day-content">тут будет что-то</div>
+		</div>
 	</div>
 </body>
 

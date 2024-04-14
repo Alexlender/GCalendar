@@ -1,33 +1,120 @@
+
+body{
+    
+}
+
+
+/* menu start*/
 #slide-menu{
     position: absolute;
-    background-color: aqua;
-    width: 200px;
-    height: 92%;
-    left: -180px;
+    background-color: white;
+    width: 250px;
+    height: calc(100% - 2px);
+    left: -252px;
     transition: left 0.4s ease;
-    transition-delay: 0.3s;
-    opacity: 50%;
+    transition-delay: 0.5s;
+    border: 1px solid black;
     z-index: 3;
-    border-radius: 0px 10px 10px 0px;
+    display: grid;
+    grid-template-rows: 1fr 3fr;
 }
 #slide-menu:hover {
     left: 0;
     transition: left 0.4s ease;
     transition-delay: 0s;
 }
-body{
-    background-image:url("https://funik.ru/wp-content/uploads/2018/10/17478da42271207e1d86.jpg") ;
+#mn-btn{
+    position: absolute;
+    top:20px;
+
+    width: 45px;
+    height: 70px;
+    border-radius: 0px 100px 100px 0px;
+    background-color: white;
+    border: 1px solid black;
+}
+#mn-btn:hover ~ #slide-menu{
+    left: 0;
+    transition: left 0.4s ease;
+    transition-delay: 0s;
 }
 
-.user-info{
-    position: absolute;
-    right: 0;
-    top: 0;
+/* inside the menu */
+.user-info-box{
+    display: flex;
+    gap: 15px;
 }
+.user-info-box img{
+    width: 30%;
+    height: 30%;
+    border-radius: 100%;
+}
+.name-opt-logout{
+    width: 100%;
+    /* border: 2px solid red; */
+    display: grid;
+    grid-template: "a a" "b b";
+
+
+    font-size: 15px;
+}
+.ref-btn{
+    color: black;
+    transition: color 0.2s ease-in-out;
+    margin: auto;
+    text-decoration: none;
+}
+.ref-btn:hover{
+    color: gray;
+}
+
+
+
+.useful-btn-box{
+    width: 100%;
+    display: grid;
+    grid-template: "a" "b";
+}
+
+.useful-btn{
+    width: 80%;
+    border: 1px solid black;
+    height: 30%;
+    text-align: center;
+    margin: auto;
+}
+/* menu end*/
+
+
+/* main div start*/
+#main-div{
+    position: absolute;
+    top: 20%;
+    left: 1%;
+    width: 98%;
+    height: fit-content;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    grid-gap: 2%;
+}
+
+
+.day{
+    width: auto;
+    height: 400px;
+    background-color: rgb(209, 209, 209);
+}
+
+
+/* main div end */
+
+
+
+
 
 .header{
     /* width: 100%; */
     display: flex;
-    justify-content: space-between;
     
 }
