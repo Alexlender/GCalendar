@@ -32,6 +32,7 @@ const urlencodedParser = express.urlencoded({ extended: false });
 app.use(cookieParser('vlad1'));
 app.use(bodyParser.json())
 
+//хмм
 
 const authenticateToken = (req, res, next) => {
 
